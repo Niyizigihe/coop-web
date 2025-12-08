@@ -1,9 +1,9 @@
 import { MemberModel } from "../src/models/memberModel.js";
 import { db } from "../src/config/db.js";
+import { describe, it, expect } from "@jest/globals";
 
-describe("MemberModel unit tests", () => {
-
-  test("should create a new member", async () => {
+describe("MemberModel", () => {
+  it("should insert a member", async () => {
     const result = await MemberModel.create({
       names: "Test Member",
       national_id: "12345678901234",
@@ -11,9 +11,6 @@ describe("MemberModel unit tests", () => {
       cooperative_name: "Test Coop"
     });
     expect(result[0].affectedRows).toBe(1);
-
-    // Clean up
     await db.query("DELETE FROM members WHERE national_id=?", ["12345678901234"]);
   });
-
 });

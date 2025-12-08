@@ -1,5 +1,6 @@
-const request = require("supertest");
-const app = require("../src/app");
+import request from "supertest";
+import app from "../src/server.js"; // <- use server.js
+import { describe, it, expect } from "@jest/globals";
 
 describe("GET /hello", () => {
   it("should return greeting message", async () => {
