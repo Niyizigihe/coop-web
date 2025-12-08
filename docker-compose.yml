@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   coop-mysql:
     image: mysql:8.0
@@ -9,7 +7,7 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: cooperative_db
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -26,16 +24,17 @@ services:
       coop-mysql:
         condition: service_healthy
     environment:
-      DB_HOST: coop-mysql
+      DB_HOST: coop_mysql
       DB_USER: root
-      DB_PASS: root
+      DB_PASSWORD: root
       DB_NAME: cooperative_db
       PORT: 3000
+      NODE_ENV: production
     ports:
       - "3000:3000"
     volumes:
       - .:/app
-    command: ["node", "src/server.js"]
+      - /app/node_modules
 
 volumes:
   mysql_data:

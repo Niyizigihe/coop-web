@@ -1,26 +1,32 @@
-<h2>Cooperative Members</h2>
+<h1>Cooperative Members</h1>
+<a href="/members/new" class="btn" style="margin-bottom: 20px;">➕ Add New Member</a>
 
-<table>
-  <tr>
-    <th>ID</th>
-    <th>Names</th>
-    <th>NID</th>
-    <th>Phone</th>
-    <th>Cooperative</th>
-    <th>Actions</th>
-  </tr>
-
-  <% members.forEach(m => { %>
+<% if (members && members.length > 0) { %>
+  <table border="1" cellpadding="10" style="width: 100%;">
     <tr>
-      <td><%= m.id %></td>
-      <td><%= m.names %></td>
-      <td><%= m.national_id %></td>
-      <td><%= m.phone %></td>
-      <td><%= m.cooperative_name %></td>
-      <td>
-        <a href="/members/edit/<%= m.id %>">Edit</a> |
-        <a href="/members/delete/<%= m.id %>" onclick="return confirm('Delete?')">Delete</a>
-      </td>
+      <th>ID</th>
+      <th>Names</th>
+      <th>National ID</th>
+      <th>Phone</th>
+      <th>Cooperative Name</th>
+      <th>Actions</th>
     </tr>
-  <% }) %>
-</table>
+    <% members.forEach(member => { %>
+      <tr>
+        <td><%= member.id %></td>
+        <td><%= member.names %></td>
+        <td><%= member.national_id %></td>
+        <td><%= member.phone %></td>
+        <td><%= member.cooperative_name %></td>
+        <td>
+          <a href="/members/<%= member.id %>/edit" style="color: blue; text-decoration: underline; margin-right: 10px;">Edit</a>
+          <form method="POST" action="/members/<%= member.id %>/delete" style="display: inline;" onsubmit="return confirm('Are you sure?');">
+            <button type="submit" style="color: red; background: none; border: none; cursor: pointer; text-decoration: underline;">Delete</button>
+          </form>
+        </td>
+      </tr>
+    <% }); %>
+  </table>
+<% } else { %>
+  <p>No members found. <a href="/members/new">Create one now</a></p>
+<% } %>

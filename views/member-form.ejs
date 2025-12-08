@@ -1,0 +1,56 @@
+<h1><%= isEdit ? 'Edit Member' : 'Add New Member' %></h1>
+
+<form method="POST" action="<%= isEdit ? '/members/' + member.id : '/members' %>" style="max-width: 500px;">
+  <div style="margin-bottom: 15px;">
+    <label for="names">Full Names:</label>
+    <input 
+      type="text" 
+      id="names" 
+      name="names" 
+      value="<%= isEdit ? member.names : '' %>" 
+      required 
+      style="width: 100%; padding: 8px; box-sizing: border-box;"
+    />
+  </div>
+
+  <div style="margin-bottom: 15px;">
+    <label for="national_id">National ID:</label>
+    <input 
+      type="text" 
+      id="national_id" 
+      name="national_id" 
+      value="<%= isEdit ? member.national_id : '' %>" 
+      required 
+      style="width: 100%; padding: 8px; box-sizing: border-box;"
+    />
+  </div>
+
+  <div style="margin-bottom: 15px;">
+    <label for="phone">Phone:</label>
+    <input 
+      type="text" 
+      id="phone" 
+      name="phone" 
+      value="<%= isEdit ? member.phone : '' %>" 
+      required 
+      style="width: 100%; padding: 8px; box-sizing: border-box;"
+    />
+  </div>
+
+  <div style="margin-bottom: 15px;">
+    <label for="cooperative_name">Cooperative Name:</label>
+    <input 
+      type="text" 
+      id="cooperative_name" 
+      name="cooperative_name" 
+      value="<%= isEdit ? member.cooperative_name : '' %>" 
+      required 
+      style="width: 100%; padding: 8px; box-sizing: border-box;"
+    />
+  </div>
+
+  <div style="margin-bottom: 15px;">
+    <button type="submit" class="btn"><%= isEdit ? 'Update Member' : 'Add Member' %></button>
+    <a href="/members" class="btn" style="background: #666; text-decoration: none; display: inline-block;">Cancel</a>
+  </div>
+</form>

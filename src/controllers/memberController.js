@@ -1,32 +1,64 @@
 import { MemberModel } from "../models/memberModel.js";
 
-export const MemberController = {
-  async showMembers(req, res) {
+export const showMembers = async (req, res) => {
+  try {
     const [members] = await MemberModel.getAll();
-    res.render("members", { members });
-  },
+    if (res.json) {
+      res.json(members);
+    }
+    return [members];
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
-  showAddForm(req, res) {
-    res.render("add-member");
-  },
+export const getMemberById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [member] = await MemberModel.getById(id);
+    res.json(member);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
-  async addMember(req, res) {
-    await MemberModel.create(req.body);
-    res.redirect("/members");
-  },
+export const createMember = async (req, res) => {
+  try {
+    const { names, national_id, phone, cooperative_name } = req.body;
+    const result = await MemberModel.create({
+      names,
+      national_id,
+      phone,
+      cooperative_name
+    });
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
-  async showEditForm(req, res) {
-    const [result] = await MemberModel.getById(req.params.id);
-    res.render("edit-member", { member: result[0] });
-  },
+export const updateMember = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { names, national_id, phone, cooperative_name } = req.body;
+    const result = await MemberModel.update(id, {
+      names,
+      national_id,
+      phone,
+      cooperative_name
+    });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
-  async updateMember(req, res) {
-    await MemberModel.update(req.params.id, req.body);
-    res.redirect("/members");
-  },
-
-  async deleteMember(req, res) {
-    await MemberModel.delete(req.params.id);
-    res.redirect("/members");
+export const deleteMember = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await MemberModel.delete(id);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };

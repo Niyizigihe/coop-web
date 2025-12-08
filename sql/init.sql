@@ -1,11 +1,19 @@
 CREATE DATABASE IF NOT EXISTS cooperative_db;
+
 USE cooperative_db;
 
 CREATE TABLE IF NOT EXISTS members (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    names VARCHAR(100) NOT NULL,
-    national_id VARCHAR(16) UNIQUE NOT NULL,
-    phone VARCHAR(20),
-    cooperative_name VARCHAR(120),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  names VARCHAR(255) NOT NULL,
+  national_id VARCHAR(50) NOT NULL UNIQUE,
+  phone VARCHAR(20) NOT NULL,
+  cooperative_name VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+-- Insert sample data
+INSERT INTO members (names, national_id, phone, cooperative_name) VALUES
+('John Doe', '10000000001', '0701234567', 'Cooperative A'),
+('Jane Smith', '10000000002', '0702345678', 'Cooperative B')
+ON DUPLICATE KEY UPDATE names=names;
