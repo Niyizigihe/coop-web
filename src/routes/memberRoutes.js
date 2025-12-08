@@ -8,16 +8,18 @@ router.get("/", (req, res) => {
   res.render("index");
 });
 
-// Members page (renders HTML or returns JSON based on accept header)
+// Members page - render HTML for browser, JSON for API
 router.get("/members", async (req, res) => {
   try {
     const [members] = await MemberModel.getAll();
-    // Check if this is an API request or browser request
-    if (req.headers.accept && req.headers.accept.includes('application/json')) {
-      res.status(200).json(members);
-    } else {
-      res.render("members", { members });
+    
+    // Check if request wants JSON (from tests/API)
+    if (req.accepts('json') && !req.accepts('html')) {
+      return res.status(200).json(members);
     }
+    
+    // Default: render HTML for browser
+    res.render("members", { members });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
