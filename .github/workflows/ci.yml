@@ -32,17 +32,6 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run tests
-        run: npm test
-
-      - name: Notify Slack on failure
-        if: failure()
-        run: |
-          curl -X POST -H 'Content-type: application/json' \
-          --data '{"text":"⚠️ CI Failed! Check your Node.js tests."}' ${{ secrets.SLACK_WEBHOOK_URL }}
       - name: Wait for MySQL
         run: |
           for i in {1..30}; do
@@ -50,4 +39,25 @@ jobs:
             echo "Waiting for MySQL..."
             sleep 2
           done
+
+      - name: Initialize Database
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot cooperative_db < sql/init.sql
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        env:
+          DB_HOST: 127.0.0.1
+          DB_USER: root
+          DB_PASSWORD: root
+          DB_NAME: cooperative_db
+        run: npm test
+
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":"⚠️ CI Failed! Check your Node.js tests."}' ${{ secrets.SLACK_WEBHOOK_URL }}
 
