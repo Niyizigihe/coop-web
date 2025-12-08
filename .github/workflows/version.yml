@@ -1,0 +1,98 @@
+name: Semantic Versioning
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Get latest version tag
+        id: latest_tag
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_OUTPUT
+          echo "Latest tag: ${LATEST_TAG}"
+
+      - name: Calculate new version
+        id: new_version
+        run: |
+          LATEST_TAG="${{ steps.latest_tag.outputs.LATEST_TAG }}"
+          VERSION="${LATEST_TAG#v}"
+          MAJOR=$(echo $VERSION | cut -d. -f1)
+          MINOR=$(echo $VERSION | cut -d. -f2)
+          PATCH=$(echo $VERSION | cut -d. -f3)
+          
+          if [[ "${{ github.event.inputs.version_type }}" == "major" ]]; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif [[ "${{ github.event.inputs.version_type }}" == "minor" ]]; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          else
+            PATCH=$((PATCH + 1))
+          fi
+          
+          NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "New version: ${NEW_VERSION}"
+
+      - name: Update package.json version
+        run: |
+          npm version ${{ steps.new_version.outputs.NEW_VERSION }} --no-git-tag-version
+          cat package.json | grep '"version"'
+
+      - name: Commit and tag
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add package.json package-lock.json
+          git commit -m "chore: bump version to ${{ steps.new_version.outputs.NEW_VERSION }}"
+          git tag -a ${{ steps.new_version.outputs.NEW_VERSION }} -m "Release ${{ steps.new_version.outputs.NEW_VERSION }}"
+          git push origin main
+          git push origin ${{ steps.new_version.outputs.NEW_VERSION }}
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.new_version.outputs.NEW_VERSION }}
+          release_name: Release ${{ steps.new_version.outputs.NEW_VERSION }}
+          body: |
+            ## Release ${{ steps.new_version.outputs.NEW_VERSION }}
+            
+            Version bump: **${{ github.event.inputs.version_type }}**
+            
+            This release will trigger the Docker build and push workflow.
+          draft: false
+          prerelease: false
+
+      - name: Notify Slack
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{\"text\":\"📦 New version created: ${{ steps.new_version.outputs.NEW_VERSION }}\"}" \
+          ${{ secrets.SLACK_WEBHOOK_URL }}
