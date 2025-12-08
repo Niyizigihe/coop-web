@@ -1,0 +1,26 @@
+<h2>Cooperative Members</h2>
+
+<table>
+  <tr>
+    <th>ID</th>
+    <th>Names</th>
+    <th>NID</th>
+    <th>Phone</th>
+    <th>Cooperative</th>
+    <th>Actions</th>
+  </tr>
+
+  <% members.forEach(m => { %>
+    <tr>
+      <td><%= m.id %></td>
+      <td><%= m.names %></td>
+      <td><%= m.national_id %></td>
+      <td><%= m.phone %></td>
+      <td><%= m.cooperative_name %></td>
+      <td>
+        <a href="/members/edit/<%= m.id %>">Edit</a> |
+        <a href="/members/delete/<%= m.id %>" onclick="return confirm('Delete?')">Delete</a>
+      </td>
+    </tr>
+  <% }) %>
+</table>

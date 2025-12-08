@@ -1,0 +1,18 @@
+<h2>Edit Member</h2>
+
+<form method="POST" action="/members/edit/<%= member.id %>">
+
+  <label>Names</label>
+  <input type="text" name="names" value="<%= member.names %>" required>
+
+  <label>National ID</label>
+  <input type="text" name="national_id" value="<%= member.national_id %>" required>
+
+  <label>Phone</label>
+  <input type="text" name="phone" value="<%= member.phone %>">
+
+  <label>Cooperative Name</label>
+  <input type="text" name="cooperative_name" value="<%= member.cooperative_name %>">
+
+  <button type="submit">Update</button>
+</form>
