@@ -1,0 +1,121 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: coop-app
+data:
+  alert-rules.yml: |
+    groups:
+    - name: coop-web-alerts
+      interval: 30s
+      rules:
+      # Error Rate Alert (>5% errors = 99.5% uptime SLO)
+      - alert: HighErrorRate
+        expr: |
+          (sum(rate(http_requests_total{job="coop-web",status=~"5.."}[5m])) /
+           sum(rate(http_requests_total{job="coop-web"}[5m]))) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          slo: error-budget
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+
+      # Latency Alert (p99 > 500ms)
+      - alert: HighLatency
+        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job="coop-web"}[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          slo: latency
+        annotations:
+          summary: "High request latency detected"
+          description: "P99 latency is {{ $value }}s (threshold: 0.5s)"
+
+      # Pod Restart Alert
+      - alert: PodRestartingTooOften
+        expr: rate(kube_pod_container_status_restarts_total{pod=~"coop-web.*"}[15m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pod restarting frequently: {{ $labels.pod }}"
+          description: "Pod {{ $labels.pod }} restarted {{ $value }} times in 15 minutes"
+
+      # Memory Alert (>80% usage)
+      - alert: HighMemoryUsage
+        expr: |
+          (sum(container_memory_usage_bytes{pod=~"coop-web.*"}) /
+           sum(container_spec_memory_limit_bytes{pod=~"coop-web.*"})) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage: {{ $labels.pod }}"
+          description: "Memory usage is {{ $value | humanizePercentage }}"
+
+      # CPU Alert (>80% usage)
+      - alert: HighCPUUsage
+        expr: |
+          (sum(rate(container_cpu_usage_seconds_total{pod=~"coop-web.*"}[5m])) /
+           sum(container_spec_cpu_quota{pod=~"coop-web.*"}/container_spec_cpu_period{pod=~"coop-web.*"})) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage: {{ $labels.pod }}"
+          description: "CPU usage is {{ $value | humanizePercentage }}"
+
+      # Database Connection Alert
+      - alert: HighDatabaseConnections
+        expr: mysql_global_status_threads_connected > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database connections"
+          description: "Active connections: {{ $value }}"
+
+      # Service Down Alert
+      - alert: ServiceDown
+        expr: up{job="coop-web"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service is down"
+          description: "coop-web service is not responding"
+
+      # Deployment Replica Mismatch
+      - alert: DeploymentReplicasMismatch
+        expr: |
+          kube_deployment_spec_replicas{deployment="coop-web",namespace="coop-app"} !=
+          kube_deployment_status_replicas_available{deployment="coop-web",namespace="coop-app"}
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Deployment replicas mismatch"
+          description: "Expected {{ $value }} replicas but only available ones differ"
+
+    - name: slo-tracking
+      interval: 1m
+      rules:
+      # Error Budget Tracking (99.5% SLO = 21.6 minutes downtime/month)
+      - record: slo:error_budget:remaining
+        expr: |
+          100 - (
+            (sum(rate(http_requests_total{job="coop-web",status=~"5.."}[30d])) /
+             sum(rate(http_requests_total{job="coop-web"}[30d]))) * 100
+          )
+
+      # Availability Tracking
+      - record: slo:availability:30day
+        expr: |
+          (sum(rate(http_requests_total{job="coop-web",status!~"5.."}[30d])) /
+           sum(rate(http_requests_total{job="coop-web"}[30d]))) * 100
+
+      # Request Rate
+      - record: instance:request_rate:1m
+        expr: sum(rate(http_requests_total{job="coop-web"}[1m])) by (instance)
